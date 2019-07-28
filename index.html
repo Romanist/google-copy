@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Custom google search full version</title>
+</head>
+<body>
+	<style>
+		body{
+		    padding: 20px;
+		    margin: 0;
+		    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+		    line-height: 1.6;
+		    font-weight: 300;
+		}
+		.results{
+			display: -webkit-flex;
+			display: -moz-flex;
+			display: -ms-flex;
+			display: -o-flex;
+			display: flex;
+		}
+		.results__wrap{
+			width: 50%;
+		}
+		.results_item__title{
+			font-weight: normal;
+		}
+	</style>
+	<header class="header">
+		<form action="" class="header__search">
+			<input class="header__input" type="text"> 
+            <button class="header__btn">Search</button>
+		</form>
+	</header>
+	<div class="results">
+		<section class="results__images results__wrap">
+			<h1 class="results__title">Image result</h1>
+		</section>
+		<section class="results__text results__wrap">
+			<h1 class="results__title">Web result</h1>
+			<div class="results__items">
+
+			</div>
+		</section>
+	</div>
+	<script>
+		'use strict';
+
+		const $searchForm = document.querySelector('.header__search')
+		const $resultsWR = document.querySelector('.results__items')
+
+		$searchForm.addEventListener('submit', (e) => {
+	        e.preventDefault()
+	        e.stopPropagation()
+	        const INPUT_VAL = $searchForm.querySelector('.header__input').value
+	        if (INPUT_VAL) {
+	        	initSearch(INPUT_VAL)
+	        } else {
+	        	// display empty-warning message
+	        }
+	        return false
+	    })
+
+		const initSearch = async (INPUT_VALUE) => {
+			// const INPUT_VALUE = 'eminem'
+	        const URL = 'https://www.googleapis.com/customsearch/v1'
+	        
+			const params = {
+	            q: INPUT_VALUE,
+	            cx: '014732014023849266343:mfdibz5up-i',
+	            key: 'AIzaSyAt0MiIBt86n4Lic2QW36ApSqBUjTVoxqk',
+	            // searchType: 'image',
+	        }
+
+	        // maiking fetch api better
+	        const ESQ = encodeURIComponent
+	        const QUERY = Object.keys(params)
+	            .map(k => ESQ(k) + '=' + ESQ(params[k]))
+	            .join('&')
+	        const URL_QUERY = URL + '?' + QUERY
+
+            // TODO: handle errors
+            const response = await fetch(URL_QUERY)
+            const data = await response.json()
+            displayResults(data)
+		}
+
+		const displayResults = (data) => {
+			console.log(data)
+			const ITEMS = data.items
+			const ARR = ITEMS.map(item => htmlTemplate(item.htmlTitle, item.formattedUrl, item.htmlSnippet))
+			const HTML_TEMPL = ARR.join('')
+			$resultsWR.innerHTML = HTML_TEMPL
+		}
+
+		const htmlTemplate = (title, link, description) => {
+			return `<div class="results_item results__item">
+						<a class="results_item__link_wr" href="${link}">
+							<h3 class="results_item__title">${title}</h3>
+							<span class="results_item__link">${link}</span>
+						</a>
+						<p class="results_item__desc">${description}</p>
+					</div>`
+		}
+	</script>
+</body>
+</html>
