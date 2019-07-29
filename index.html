@@ -7,24 +7,96 @@
 <body>
 	<style>
 		body{
-		    padding: 20px;
+		    padding: 50px;
 		    margin: 0;
+
 		    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
 		    line-height: 1.6;
 		    font-weight: 300;
 		}
-		.results{
+		.results,
+		.results__image_items{
 			display: -webkit-flex;
 			display: -moz-flex;
 			display: -ms-flex;
 			display: -o-flex;
 			display: flex;
 		}
+		.results{
+			justify-content: space-between;
+		}
 		.results__wrap{
-			width: 50%;
+			width: 47%;
+		}
+		.results__image_item,
+		.results_item__link_wr{
+			color: #1a0dab;
+			text-decoration: none;
+		}
+		.results_item__link_wr{
+			display: block;
+		}
+		.results_item__link{
+			color: #006621;
+    		font-style: normal;
 		}
 		.results_item__title{
+			margin: 0;
+
 			font-weight: normal;
+		}
+		.results_image_item__img_wr{
+			display: -webkit-flex;
+			display: -moz-flex;
+			display: -ms-flex;
+			display: -o-flex;
+			display: flex;
+
+			width: 200px;
+			height: 200px;
+
+			justify-content: center;
+			-ms-align-items: center;
+			align-items: center;
+		}
+		.results_image_item__img{
+			max-width: 200px;
+			max-height: 200px;
+		}
+		.results__image_items{
+			-webkit-flex-wrap: wrap;
+			-moz-flex-wrap: wrap;
+			-ms-flex-wrap: wrap;
+			-o-flex-wrap: wrap;
+			flex-wrap: wrap;
+			justify-content: space-between;
+		}
+		.results_image_item{
+			display: block;
+
+			width: 200px;
+			padding-bottom: 30px;
+
+			overflow: hidden;
+		}
+		.results_item__desc{
+			margin-top: 0;
+		}
+		.results_image_item__title{
+			color: #000;
+		}
+		.results_image_item__title,
+		.results_image_item__link{
+			display: block;
+
+			width: 200px;
+
+			text-overflow: ellipsis;
+  			overflow: hidden;
+  			white-space: nowrap;
+		}
+		.results__image_items span{
+			width: 200px;
 		}
 	</style>
 	<header class="header">
@@ -36,6 +108,9 @@
 	<div class="results">
 		<section class="results__images results__wrap">
 			<h1 class="results__title">Image result</h1>
+			<div class="results__image_items">
+
+			</div>
 		</section>
 		<section class="results__text results__wrap">
 			<h1 class="results__title">Web result</h1>
@@ -49,49 +124,75 @@
 
 		const $searchForm = document.querySelector('.header__search')
 		const $resultsWR = document.querySelector('.results__items')
+		const $resultsItemWR = document.querySelector('.results__image_items')
 
 		$searchForm.addEventListener('submit', (e) => {
 	        e.preventDefault()
 	        e.stopPropagation()
-	        const INPUT_VAL = $searchForm.querySelector('.header__input').value
-	        if (INPUT_VAL) {
-	        	initSearch(INPUT_VAL)
+	        const inputVal = $searchForm.querySelector('.header__input').value
+	        if (inputVal) {
+	        	initSearch(inputVal)
 	        } else {
 	        	// display empty-warning message
 	        }
 	        return false
 	    })
 
-		const initSearch = async (INPUT_VALUE) => {
-			// const INPUT_VALUE = 'eminem'
-	        const URL = 'https://www.googleapis.com/customsearch/v1'
+		const initSearch = async (inputVal) => {
+	        const url = 'https://www.googleapis.com/customsearch/v1'
 	        
 			const params = {
-	            q: INPUT_VALUE,
+	            q: inputVal,
 	            cx: '014732014023849266343:mfdibz5up-i',
 	            key: 'AIzaSyAt0MiIBt86n4Lic2QW36ApSqBUjTVoxqk',
-	            // searchType: 'image',
 	        }
+	        const imageParams = Object.assign({}, params, {searchType: 'image',})
 
 	        // maiking fetch api better
-	        const ESQ = encodeURIComponent
-	        const QUERY = Object.keys(params)
-	            .map(k => ESQ(k) + '=' + ESQ(params[k]))
+	        const esq = encodeURIComponent
+	        const query = Object.keys(params)
+	            .map(k => esq(k) + '=' + esq(params[k]))
 	            .join('&')
-	        const URL_QUERY = URL + '?' + QUERY
+	        const urlQuery = url + '?' + query
+
+	        const queryImage = Object.keys(imageParams)
+	            .map(k => esq(k) + '=' + esq(imageParams[k]))
+	            .join('&')
+	        const urlQueryImage = url + '?' + queryImage
 
             // TODO: handle errors
-            const response = await fetch(URL_QUERY)
-            const data = await response.json()
-            displayResults(data)
+	        try {
+	        	const response = await fetch(urlQuery)
+	            const data = await response.json()
+	            displayResults(data)
+	        } catch (err) {
+	        	console.log(err)
+	        }
+
+	        try {
+	        	const response = await fetch(urlQueryImage)
+	            const data = await response.json()
+	            displayImageResults(data)
+	        } catch (err) {
+	        	console.log(err)
+	        }
 		}
 
 		const displayResults = (data) => {
 			console.log(data)
-			const ITEMS = data.items
-			const ARR = ITEMS.map(item => htmlTemplate(item.htmlTitle, item.formattedUrl, item.htmlSnippet))
-			const HTML_TEMPL = ARR.join('')
-			$resultsWR.innerHTML = HTML_TEMPL
+			const items = data.items
+			const arr = items.map(item => htmlTemplate(item.htmlTitle, item.formattedUrl, item.snippet))
+			const htmlTempl = arr.join('')
+			$resultsWR.innerHTML = htmlTempl
+		}
+
+		const displayImageResults = (data) => {
+			console.log(data)
+			const items = data.items
+			const arr = items.map(item => htmlImageTemplate(item.htmlTitle, item.displayLink, item.link, item.title))
+			const htmlTempl = arr.join('')
+			// spans - trick for flex's justify content
+			$resultsItemWR.innerHTML = htmlTempl + '<span></span><span></span>'
 		}
 
 		const htmlTemplate = (title, link, description) => {
@@ -102,6 +203,16 @@
 						</a>
 						<p class="results_item__desc">${description}</p>
 					</div>`
+		}
+
+		const htmlImageTemplate = (htmlTitle, link, src, title) => {
+			return `<a class="results_image_item results__image_item" href="${link}">
+						<div class="results_image_item__img_wr">
+							<img class="results_image_item__img" src="${src}" alt="${title}">
+						</div>
+						<h3 class="results_item__title results_image_item__title">${htmlTitle}</h3>
+						<span class="results_item__link results_image_item__link">${link}</span>
+					</a>`
 		}
 	</script>
 </body>
