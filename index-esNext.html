@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Custom google search full version</title>
+</head>
+<body>
+	<style>
+		body{
+		    padding: 50px;
+		    margin: 0;
+
+		    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+		    line-height: 1.6;
+		    font-weight: 300;
+		}
+		/*//header//*/
+		.header{
+			position: relative;
+		}
+		.header__warn{
+			position: absolute;
+
+			bottom: -25px;
+			left: 0;
+
+			opacity: 0;
+			-webkit-transition: all ease .3s;
+			-o-transition: all ease .3s;
+			transition: all ease .3s;
+		}
+		.header__warn-vis{
+			opacity: 1;
+		}
+		.header__input{
+			width: 70%;
+			max-width: 500px;
+		}
+		.header__btn{
+			width: 25%;
+			max-width: 100px;
+		}
+		.header__item{
+			padding: 5px 10px;
+			
+			-webkit-box-sizing: border-box;
+			-moz-box-sizing: border-box;
+			box-sizing: border-box;
+		}
+		.header__label{
+			position: absolute;
+
+			top: -40px;
+			left: 0;
+
+			font-size: 1.4em;
+			font-weight: bold;
+		}
+		.header__label-hid{
+			display: none;
+		}
+		/*//results//*/
+		.results,
+		.results__image_items{
+			display: -webkit-flex;
+			display: -moz-flex;
+			display: -ms-flex;
+			display: -o-flex;
+			display: flex;
+		}
+		.results{
+			justify-content: space-between;
+		}
+		.results__wrap{
+			width: 47%;
+
+			opacity: 0;
+		}
+		.results__wrap-viz{
+			opacity: 1;
+		}
+		.results__image_item,
+		.results_item__link_wr{
+			color: #1a0dab;
+			text-decoration: none;
+		}
+		.results_image_item__img{
+			-webkit-transition: all ease .3s;
+			-o-transition: all ease .3s;
+			transition: all ease .3s;
+		}
+		.results__image_item:hover .results_image_item__img{
+			-webkit-transform: scale(1.1, 1.1);
+			-ms-transform: scale(1.1, 1.1);
+			-o-transform: scale(1.1, 1.1);
+			transform: scale(1.1, 1.1);
+		}
+		.results_item__link_wr{
+			display: block;
+		}
+		.results_item__link_wr:hover .results_item__title{
+			text-decoration: underline;
+		}
+		.results_item__link{
+			color: #006621;
+    		font-style: normal;
+		}
+		.results_item__title{
+			margin: 0;
+
+			font-weight: normal;
+		}
+		.results_image_item__img_wr{
+			display: -webkit-flex;
+			display: -moz-flex;
+			display: -ms-flex;
+			display: -o-flex;
+			display: flex;
+
+			width: 200px;
+			height: 200px;
+
+			justify-content: center;
+			-ms-align-items: center;
+			align-items: center;
+
+			overflow: hidden;
+		}
+		.results_image_item__img{
+			max-width: 200px;
+			max-height: 200px;
+		}
+		.results__image_items{
+			-webkit-flex-wrap: wrap;
+			-moz-flex-wrap: wrap;
+			-ms-flex-wrap: wrap;
+			-o-flex-wrap: wrap;
+			flex-wrap: wrap;
+			justify-content: space-between;
+		}
+		.results_image_item{
+			display: block;
+
+			width: 200px;
+			padding-bottom: 30px;
+		}
+		.results_item__desc{
+			margin-top: 0;
+		}
+		.results_image_item__title{
+			color: #000;
+		}
+		.results_image_item__title,
+		.results_image_item__link{
+			display: block;
+
+			width: 200px;
+
+			text-overflow: ellipsis;
+  			overflow: hidden;
+  			white-space: nowrap;
+		}
+		.results__image_items span{
+			width: 200px;
+		}
+		.results__pag_wr{
+			display: -webkit-flex;
+			display: -moz-flex;
+			display: -ms-flex;
+			display: -o-flex;
+			display: flex;
+
+			justify-content: center;
+		}
+		.results__pag{
+			padding: 5px 10px;
+
+			text-decoration: none;
+		}
+		.results__pag:hover{
+			text-decoration: underline;
+		}
+		.results__pag-active{
+			text-decoration: underline;
+			-webkit-transform: scale(1.2, 1.2);
+			-ms-transform: scale(1.2, 1.2);
+			-o-transform: scale(1.2, 1.2);
+			transform: scale(1.2, 1.2);
+		}
+		/*//minimal responsive//*/
+		@media screen and (max-width: 1024px) {
+			.results{
+				-webkit-flex-wrap: wrap;
+				-moz-flex-wrap: wrap;
+				-ms-flex-wrap: wrap;
+				-o-flex-wrap: wrap;
+				flex-wrap: wrap;
+
+				overflow: hidden;
+			}
+			.results_image_item{
+				width: 30%;
+			}
+			.results_image_item__img_wr{
+				width: auto;
+				height: auto;
+			}
+			.results__wrap,
+			.results_image_item__title,
+			.results__image_items span{
+				width: 100%;
+			}
+		}
+		@media screen and (max-width: 767px) {
+			body{
+				padding: 20px;
+			}
+			.results_image_item{
+				width: 100%;
+			}
+		}
+	</style>
+	<header class="header">
+		<form action="#" class="header__search">
+			<label for="header__input" class="header__label">Search me!</label>
+			<input id="header__input" class="header__input header__item" type="text"> 
+            <button class="header__btn header__item">Search</button>
+            <span class="header__search_warn header__warn">Sorry something went wrong, try again in a few seconds.</span>
+            <span class="header__input_warn header__warn">Why would you search for nothing?</span>
+		</form>
+	</header>
+	<div class="results">
+		<section class="results__images results__wrap">
+			<h1 class="results__title">Image result</h1>
+			<div class="results__image_items">
+
+			</div>
+		</section>
+		<section class="results__text results__wrap">
+			<h1 class="results__title">Web result</h1>
+			<div class="results__items">
+
+			</div>
+			<div class="results__pag_wr">
+				<a href="#" class="results__pag results__pag-active">1</a>
+				<a href="#" class="results__pag">2</a>
+				<a href="#" class="results__pag">3</a>
+			</div>
+		</section>
+	</div>
+	<script>
+		'use strict';
+
+		const $searchForm = document.querySelector('.header__search')
+		const $searchInput = $searchForm.querySelector('.header__input')
+		const $searchTitle = $searchForm.querySelector('.header__label')
+		const $resultsWR = document.querySelector('.results__items')
+		const $resultsItemWR = document.querySelector('.results__image_items')
+		const $pagItems = document.querySelectorAll('.results__pag')
+
+		$searchForm.addEventListener('submit', (e) => {
+	        e.preventDefault()
+	        e.stopPropagation()
+	        const inputVal = $searchInput.value
+
+	        if (inputVal) {
+	        	$searchTitle.innerHTML = 'Searching...'
+	        	$searchTitle.classList.remove('header__label-hid')
+	        	document.querySelector('.header__search_warn').classList.remove('header__warn-vis')
+	        	initSearch(inputVal)
+	        } else {
+	        	document.querySelector('.header__input_warn').classList.add('header__warn-vis')
+	        }
+	    })
+
+	    $searchInput.addEventListener('keypress', () => {
+	    	document.querySelector('.header__input_warn').classList.remove('header__warn-vis')
+	    })
+
+	    $pagItems.forEach((item, index) => {
+	    	item.addEventListener('click', (e) => {
+	    		e.preventDefault()
+	    		const inputVal = $searchInput.value
+	    		const nextPage = Number(e.target.innerHTML) - 1
+	    		initSearch(inputVal, nextPage)
+	    	})
+	    })
+
+		const initSearch = (inputVal, pageNumber) => {
+	        const url = 'https://www.googleapis.com/customsearch/v1'
+	        const responseNumber = 6
+	        
+			let params = {
+	            q: inputVal,
+	            cx: '014732014023849266343:mfdibz5up-i',
+	            key: 'AIzaSyCx4sRBhjN9y3kW2SVOwQbJWwDY1Ff95Sg',
+	            num: responseNumber,
+	        }
+	        // google forbids zero or empty values of parametres, so
+	        params = pageNumber ? Object.assign({}, params, {start: (pageNumber * responseNumber) + 1,}) : params
+
+	        const imageParams = Object.assign({}, params, {searchType: 'image',})
+	        
+	        const urlQuery = formQuery(url, params)
+	        const urlQueryImage = formQuery(url, imageParams)
+
+        	sendRequest(urlQuery)
+        		.then(data => {displayResults(data, responseNumber)})
+        		.catch(err => {handleErr()})
+
+        	sendRequest(urlQueryImage)
+        		.then(data => {displayImageResults(data)})
+        		.catch(err => {handleErr()})
+		}
+
+		const formQuery = (url, params) => {
+			// maiking fetch api better
+			const esq = encodeURIComponent
+			const query = Object.keys(params)
+	            .map(k => esq(k) + '=' + esq(params[k]))
+	            .join('&')
+	        return url + '?' + query
+		}
+
+		const sendRequest = async (query) => {
+			const response = await fetch(query)
+            const data = await response.json()
+            return data
+		}
+
+		const handleErr = () => {
+			document.querySelector('.header__search_warn').classList.add('header__warn-vis')
+			$resultsWR.innerHTML = ''
+			$resultsItemWR.innerHTML = ''
+			$searchTitle.innerHTML = ':('
+		}
+
+		const displayResults = (data) => {
+			const items = data.items
+			const arr = items.map(item => htmlTemplate(item.htmlTitle, item.formattedUrl, item.snippet))
+			const htmlTempl = arr.join('')
+
+			changePageNumbers(data)
+
+			$resultsWR.innerHTML = htmlTempl
+			document.querySelector('.results__text').classList.add('results__wrap-viz')
+			$searchTitle.classList.add('header__label-hid')
+		}
+
+		const changePageNumbers = (data) => {
+			const curPageStartIndex = data.queries.request[0].startIndex
+			const responseNumber = data.queries.request[0].count
+			const curPageRight = Number($pagItems[2].innerHTML)
+			const curPageLeft = Number($pagItems[0].innerHTML)
+
+			if ((curPageStartIndex < responseNumber * curPageRight) && (curPageStartIndex > responseNumber * (curPageRight - 1))) {
+				$pagItems.forEach(item => {
+				 	const nextNumber = Number(item.innerHTML) + 1
+				 	item.innerHTML = nextNumber
+			    })
+			    reserClasses(1)
+			} else if ((curPageStartIndex < responseNumber * curPageLeft) && curPageStartIndex !== 1) {
+				$pagItems.forEach(item => {
+				 	const nextNumber = Number(item.innerHTML) - 1
+				 	item.innerHTML = nextNumber
+			    })
+			    reserClasses(1)
+			} else if (curPageStartIndex !== 1) {
+				reserClasses(1)
+			} else {
+				reserClasses(0)
+			}
+		}
+
+		const reserClasses = (number) => {
+			$pagItems.forEach(item => {
+			 	item.classList.remove('results__pag-active')
+		    })
+			$pagItems[number].classList.add('results__pag-active')
+		}
+
+		const displayImageResults = (data) => {
+			const items = data.items
+			const arr = items.map(item => htmlImageTemplate(item.htmlTitle, item.displayLink, item.link, item.title))
+			const htmlTempl = arr.join('')
+
+			// spans - trick for flex's justify content
+			$resultsItemWR.innerHTML = htmlTempl + '<span></span><span></span>'
+			document.querySelector('.results__images').classList.add('results__wrap-viz')
+			$searchTitle.classList.add('header__label-hid')
+		}
+
+		const htmlTemplate = (title, link, description) => {
+			return `<div class="results_item results__item">
+						<a class="results_item__link_wr" target="_blank" href="${link}">
+							<h3 class="results_item__title">${title}</h3>
+							<span class="results_item__link">${link}</span>
+						</a>
+						<p class="results_item__desc">${description}</p>
+					</div>`
+		}
+
+		const htmlImageTemplate = (htmlTitle, link, src, title) => {
+			return `<a class="results_image_item results__image_item" target="_blank" href="${src}">
+						<div class="results_image_item__img_wr">
+							<img class="results_image_item__img" src="${src}" alt="${title}">
+						</div>
+						<h3 class="results_item__title results_image_item__title">${htmlTitle}</h3>
+						<span class="results_item__link results_image_item__link">${link}</span>
+					</a>`
+		}
+	</script>
+</body>
+</html>

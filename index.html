@@ -251,164 +251,153 @@
 	<script>
 		'use strict';
 
-		const $searchForm = document.querySelector('.header__search')
-		const $searchInput = $searchForm.querySelector('.header__input')
-		const $searchTitle = $searchForm.querySelector('.header__label')
-		const $resultsWR = document.querySelector('.results__items')
-		const $resultsItemWR = document.querySelector('.results__image_items')
-		const $pagItems = document.querySelectorAll('.results__pag')
+		var $searchForm = document.querySelector('.header__search');
+		var $searchInput = $searchForm.querySelector('.header__input');
+		var $searchTitle = $searchForm.querySelector('.header__label');
+		var $resultsWR = document.querySelector('.results__items');
+		var $resultsItemWR = document.querySelector('.results__image_items');
+		var $pagItems = document.querySelectorAll('.results__pag');
+		$searchForm.addEventListener('submit', function (e) {
+		  e.preventDefault();
+		  e.stopPropagation();
+		  var inputVal = $searchInput.value;
 
-		$searchForm.addEventListener('submit', (e) => {
-	        e.preventDefault()
-	        e.stopPropagation()
-	        const inputVal = $searchInput.value
+		  if (inputVal) {
+		    $searchTitle.innerHTML = 'Searching...';
+		    $searchTitle.classList.remove('header__label-hid');
+		    document.querySelector('.header__search_warn').classList.remove('header__warn-vis');
+		    initSearch(inputVal);
+		  } else {
+		    document.querySelector('.header__input_warn').classList.add('header__warn-vis');
+		  }
+		});
+		$searchInput.addEventListener('keypress', function () {
+		  document.querySelector('.header__input_warn').classList.remove('header__warn-vis');
+		});
+		$pagItems.forEach(function (item, index) {
+		  item.addEventListener('click', function (e) {
+		    e.preventDefault();
+		    var inputVal = $searchInput.value;
+		    var nextPage = Number(e.target.innerHTML) - 1;
+		    initSearch(inputVal, nextPage);
+		  });
+		});
 
-	        if (inputVal) {
-	        	$searchTitle.innerHTML = 'Searching...'
-	        	$searchTitle.classList.remove('header__label-hid')
-	        	document.querySelector('.header__search_warn').classList.remove('header__warn-vis')
-	        	initSearch(inputVal)
-	        } else {
-	        	document.querySelector('.header__input_warn').classList.add('header__warn-vis')
-	        }
-	    })
+		var initSearch = function initSearch(inputVal, pageNumber) {
+		  var url = 'https://www.googleapis.com/customsearch/v1';
+		  var responseNumber = 6;
+		  var params = {
+		    q: inputVal,
+		    cx: '014732014023849266343:mfdibz5up-i',
+		    key: 'AIzaSyCx4sRBhjN9y3kW2SVOwQbJWwDY1Ff95Sg',
+		    num: responseNumber // google forbids zero or empty values of parametres, so
 
-	    $searchInput.addEventListener('keypress', () => {
-	    	document.querySelector('.header__input_warn').classList.remove('header__warn-vis')
-	    })
+		  };
+		  params = pageNumber ? Object.assign({}, params, {
+		    start: pageNumber * responseNumber + 1
+		  }) : params;
+		  var imageParams = Object.assign({}, params, {
+		    searchType: 'image'
+		  });
+		  var urlQuery = formQuery(url, params);
+		  var urlQueryImage = formQuery(url, imageParams);
+		  sendRequest(urlQuery).then(function (data) {
+		    displayResults(data, responseNumber);
+		  }).catch(function (err) {
+		    handleErr();
+		  });
+		  sendRequest(urlQueryImage).then(function (data) {
+		    displayImageResults(data);
+		  }).catch(function (err) {
+		    handleErr();
+		  });
+		};
 
-	    $pagItems.forEach((item, index) => {
-	    	item.addEventListener('click', (e) => {
-	    		e.preventDefault()
-	    		const inputVal = $searchInput.value
-	    		const nextPage = Number(e.target.innerHTML) - 1
-	    		initSearch(inputVal, nextPage)
-	    	})
-	    })
+		var formQuery = function formQuery(url, params) {
+		  // maiking fetch api better
+		  var esq = encodeURIComponent;
+		  var query = Object.keys(params).map(function (k) {
+		    return esq(k) + '=' + esq(params[k]);
+		  }).join('&');
+		  return url + '?' + query;
+		};
 
-		const initSearch = (inputVal, pageNumber) => {
-	        const url = 'https://www.googleapis.com/customsearch/v1'
-	        const responseNumber = 6
-	        
-			let params = {
-	            q: inputVal,
-	            cx: '014732014023849266343:mfdibz5up-i',
-	            key: 'AIzaSyCx4sRBhjN9y3kW2SVOwQbJWwDY1Ff95Sg',
-	            num: responseNumber,
-	        }
-	        // google forbids zero or empty values of parametres, so
-	        params = pageNumber ? Object.assign({}, params, {start: (pageNumber * responseNumber) + 1,}) : params
+		var sendRequest = async function sendRequest(query) {
+		  var response = await fetch(query);
+		  var data = await response.json();
+		  return data;
+		};
 
-	        const imageParams = Object.assign({}, params, {searchType: 'image',})
-	        
-	        const urlQuery = formQuery(url, params)
-	        const urlQueryImage = formQuery(url, imageParams)
+		var handleErr = function handleErr() {
+		  document.querySelector('.header__search_warn').classList.add('header__warn-vis');
+		  $resultsWR.innerHTML = '';
+		  $resultsItemWR.innerHTML = '';
+		  $searchTitle.innerHTML = ':(';
+		};
 
-        	sendRequest(urlQuery)
-        		.then(data => {displayResults(data, responseNumber)})
-        		.catch(err => {handleErr()})
+		var displayResults = function displayResults(data) {
+		  var items = data.items;
+		  var arr = items.map(function (item) {
+		    return htmlTemplate(item.htmlTitle, item.formattedUrl, item.snippet);
+		  });
+		  var htmlTempl = arr.join('');
+		  changePageNumbers(data);
+		  $resultsWR.innerHTML = htmlTempl;
+		  document.querySelector('.results__text').classList.add('results__wrap-viz');
+		  $searchTitle.classList.add('header__label-hid');
+		};
 
-        	sendRequest(urlQueryImage)
-        		.then(data => {displayImageResults(data)})
-        		.catch(err => {handleErr()})
-		}
+		var changePageNumbers = function changePageNumbers(data) {
+		  var curPageStartIndex = data.queries.request[0].startIndex;
+		  var responseNumber = data.queries.request[0].count;
+		  var curPageRight = Number($pagItems[2].innerHTML);
+		  var curPageLeft = Number($pagItems[0].innerHTML);
 
-		const formQuery = (url, params) => {
-			// maiking fetch api better
-			const esq = encodeURIComponent
-			const query = Object.keys(params)
-	            .map(k => esq(k) + '=' + esq(params[k]))
-	            .join('&')
-	        return url + '?' + query
-		}
+		  if (curPageStartIndex < responseNumber * curPageRight && curPageStartIndex > responseNumber * (curPageRight - 1)) {
+		    $pagItems.forEach(function (item) {
+		      var nextNumber = Number(item.innerHTML) + 1;
+		      item.innerHTML = nextNumber;
+		    });
+		    reserClasses(1);
+		  } else if (curPageStartIndex < responseNumber * curPageLeft && curPageStartIndex !== 1) {
+		    $pagItems.forEach(function (item) {
+		      var nextNumber = Number(item.innerHTML) - 1;
+		      item.innerHTML = nextNumber;
+		    });
+		    reserClasses(1);
+		  } else if (curPageStartIndex !== 1) {
+		    reserClasses(1);
+		  } else {
+		    reserClasses(0);
+		  }
+		};
 
-		const sendRequest = async (query) => {
-			const response = await fetch(query)
-            const data = await response.json()
-            return data
-		}
+		var reserClasses = function reserClasses(number) {
+		  $pagItems.forEach(function (item) {
+		    item.classList.remove('results__pag-active');
+		  });
+		  $pagItems[number].classList.add('results__pag-active');
+		};
 
-		const handleErr = () => {
-			document.querySelector('.header__search_warn').classList.add('header__warn-vis')
-			$resultsWR.innerHTML = ''
-			$resultsItemWR.innerHTML = ''
-			$searchTitle.innerHTML = ':('
-		}
+		var displayImageResults = function displayImageResults(data) {
+		  var items = data.items;
+		  var arr = items.map(function (item) {
+		    return htmlImageTemplate(item.htmlTitle, item.displayLink, item.link, item.title);
+		  });
+		  var htmlTempl = arr.join(''); // spans - trick for flex's justify content
 
-		const displayResults = (data) => {
-			const items = data.items
-			const arr = items.map(item => htmlTemplate(item.htmlTitle, item.formattedUrl, item.snippet))
-			const htmlTempl = arr.join('')
+		  $resultsItemWR.innerHTML = htmlTempl + '<span></span><span></span>';
+		  document.querySelector('.results__images').classList.add('results__wrap-viz');
+		  $searchTitle.classList.add('header__label-hid');
+		};
 
-			changePageNumbers(data)
+		var htmlTemplate = function htmlTemplate(title, link, description) {
+		  return "<div class=\"results_item results__item\">\n\t\t\t\t\t\t<a class=\"results_item__link_wr\" target=\"_blank\" href=\"".concat(link, "\">\n\t\t\t\t\t\t\t<h3 class=\"results_item__title\">").concat(title, "</h3>\n\t\t\t\t\t\t\t<span class=\"results_item__link\">").concat(link, "</span>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t\t<p class=\"results_item__desc\">").concat(description, "</p>\n\t\t\t\t\t</div>");
+		};
 
-			$resultsWR.innerHTML = htmlTempl
-			document.querySelector('.results__text').classList.add('results__wrap-viz')
-			$searchTitle.classList.add('header__label-hid')
-		}
-
-		const changePageNumbers = (data) => {
-			const curPageStartIndex = data.queries.request[0].startIndex
-			const responseNumber = data.queries.request[0].count
-			const curPageRight = Number($pagItems[2].innerHTML)
-			const curPageLeft = Number($pagItems[0].innerHTML)
-
-			if ((curPageStartIndex < responseNumber * curPageRight) && (curPageStartIndex > responseNumber * (curPageRight - 1))) {
-				$pagItems.forEach(item => {
-				 	const nextNumber = Number(item.innerHTML) + 1
-				 	item.innerHTML = nextNumber
-			    })
-			    reserClasses(1)
-			} else if ((curPageStartIndex < responseNumber * curPageLeft) && curPageStartIndex !== 1) {
-				$pagItems.forEach(item => {
-				 	const nextNumber = Number(item.innerHTML) - 1
-				 	item.innerHTML = nextNumber
-			    })
-			    reserClasses(1)
-			} else if (curPageStartIndex !== 1) {
-				reserClasses(1)
-			} else {
-				reserClasses(0)
-			}
-		}
-
-		const reserClasses = (number) => {
-			$pagItems.forEach(item => {
-			 	item.classList.remove('results__pag-active')
-		    })
-			$pagItems[number].classList.add('results__pag-active')
-		}
-
-		const displayImageResults = (data) => {
-			const items = data.items
-			const arr = items.map(item => htmlImageTemplate(item.htmlTitle, item.displayLink, item.link, item.title))
-			const htmlTempl = arr.join('')
-
-			// spans - trick for flex's justify content
-			$resultsItemWR.innerHTML = htmlTempl + '<span></span><span></span>'
-			document.querySelector('.results__images').classList.add('results__wrap-viz')
-			$searchTitle.classList.add('header__label-hid')
-		}
-
-		const htmlTemplate = (title, link, description) => {
-			return `<div class="results_item results__item">
-						<a class="results_item__link_wr" target="_blank" href="${link}">
-							<h3 class="results_item__title">${title}</h3>
-							<span class="results_item__link">${link}</span>
-						</a>
-						<p class="results_item__desc">${description}</p>
-					</div>`
-		}
-
-		const htmlImageTemplate = (htmlTitle, link, src, title) => {
-			return `<a class="results_image_item results__image_item" target="_blank" href="${src}">
-						<div class="results_image_item__img_wr">
-							<img class="results_image_item__img" src="${src}" alt="${title}">
-						</div>
-						<h3 class="results_item__title results_image_item__title">${htmlTitle}</h3>
-						<span class="results_item__link results_image_item__link">${link}</span>
-					</a>`
-		}
+		var htmlImageTemplate = function htmlImageTemplate(htmlTitle, link, src, title) {
+		  return "<a class=\"results_image_item results__image_item\" target=\"_blank\" href=\"".concat(src, "\">\n\t\t\t\t\t\t<div class=\"results_image_item__img_wr\">\n\t\t\t\t\t\t\t<img class=\"results_image_item__img\" src=\"").concat(src, "\" alt=\"").concat(title, "\">\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<h3 class=\"results_item__title results_image_item__title\">").concat(htmlTitle, "</h3>\n\t\t\t\t\t\t<span class=\"results_item__link results_image_item__link\">").concat(link, "</span>\n\t\t\t\t\t</a>");
+		};
 	</script>
 </body>
 </html>
