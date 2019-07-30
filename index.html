@@ -187,6 +187,38 @@
 			-o-transform: scale(1.2, 1.2);
 			transform: scale(1.2, 1.2);
 		}
+		/*//minimal responsive//*/
+		@media screen and (max-width: 1024px) {
+			.results{
+				-webkit-flex-wrap: wrap;
+				-moz-flex-wrap: wrap;
+				-ms-flex-wrap: wrap;
+				-o-flex-wrap: wrap;
+				flex-wrap: wrap;
+
+				overflow: hidden;
+			}
+			.results_image_item{
+				width: 30%;
+			}
+			.results_image_item__img_wr{
+				width: auto;
+				height: auto;
+			}
+			.results__wrap,
+			.results_image_item__title,
+			.results__image_items span{
+				width: 100%;
+			}
+		}
+		@media screen and (max-width: 767px) {
+			body{
+				padding: 20px;
+			}
+			.results_image_item{
+				width: 100%;
+			}
+		}
 	</style>
 	<header class="header">
 		<form action="#" class="header__search">
